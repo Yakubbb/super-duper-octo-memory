@@ -1,7 +1,8 @@
 import google.generativeai as genai
 from google.generativeai.types.safety_types import HarmBlockThreshold, _NEW_HARM_CATEGORIES
 from config import API_KEY
-from random import choice
+from random import choice, randint
+from typing import AsyncIterable
 api_key = API_KEY
 
 safety_settings = {}
@@ -34,9 +35,6 @@ class Personality:
         while len(ans.parts)==0:
             ans = await model.generate_content_async(self.answer_on_joke + text, generation_config=generation_config, safety_settings=safety_settings)
         return ans.text
-
-
-    
 
 pers = [
     Personality
@@ -92,4 +90,16 @@ pers = [
 
 async def get_random_pers():
     return choice(pers)
-    
+
+class Conversation:
+    def __init__(self, bot_personality: Personality, client_personality: Personality, joke: str):
+        self.bot = bot_personality
+        self.client = client_personality
+        self.joke = joke
+
+    async def __aiter__(self) -> AsyncIterable[tuple[str, str]]:
+        client_answer = self.joke
+        for i in range(randint(1,5)):
+            bot_answer = await self.bot.get_answer_on_answer(client_answer)
+            client_answer = await self.client.get_answer_on_answer(bot_answer)
+            yield (bot_answer, client_answer)

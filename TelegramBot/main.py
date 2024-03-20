@@ -90,43 +90,23 @@ async def start_conversation(update:Update):
     pers1 = await bardApp.get_random_pers()
     pers2 = await bardApp.get_random_pers()
 
-    comment = await pers1.get_answer_on_joke(update.message.text)
-    await update.message.reply_text(comment)
-
-    client_ans = await pers2.get_answer_on_answer(comment)
-    await clientApp.send_message(client_ans,update.message.id)
-
-    for i in range(random.randint(0,4)):
-        bot_answer =await  pers1.get_answer_on_answer(client_ans)
-        client_ans = await pers2.get_answer_on_answer(bot_answer)
-
-        await update.message.reply_text(bot_answer)
-        await clientApp.send_message(client_ans,update.message.id)
+    conversation = bardApp.Conversation(pers1, pers2, update.message.text)
+    async for replics in conversation:
+        await update.message.reply_text(replics[0])
+        await clientApp.send_message(replics[1], update.message.id)
 
 async def start_self_conversation(text):
-    ANSWER = ""
+    answer = ""
 
     pers1 = await bardApp.get_random_pers()
     pers2 = await bardApp.get_random_pers()
 
-    comment = await pers1.get_answer_on_joke(text)
-    ANSWER += pers1.name + " Flex Operator: "+comment + "\n\n\n"
-    client_ans = await pers2.get_answer_on_answer(comment)
-    ANSWER += pers2.name + " Adats: "+client_ans + "\n\n\n"
-    for i in range(random.randint(0,4)):
-        bot_answer =await  pers1.get_answer_on_answer(client_ans)
-        ANSWER += pers1.name + " Flex Operator: "+bot_answer + "\n\n\n"
-        client_ans = await pers2.get_answer_on_answer(bot_answer)
-        ANSWER += pers2.name + " Adats: "+client_ans + "\n\n\n"
+    conversation = bardApp.Conversation(pers1, pers2, text)
+    async for replics in conversation:
+        answer += pers1.name + " Flex Operator: " + replics[0] + "\n\n\n"
+        answer += pers2.name + " Adats: " + replics[1] + "\n\n\n"
     
-    return ANSWER
-
-
-    
-
-    
-
-
+    return answer
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
