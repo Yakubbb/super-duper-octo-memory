@@ -35,6 +35,13 @@ class Personality:
         while len(ans.parts)==0:
             ans = await model.generate_content_async(self.answer_on_joke + text, generation_config=generation_config, safety_settings=safety_settings)
         return ans.text
+    
+    async def chat_answer_on_answer(self, chat: genai.ChatSession, text: str) -> str:
+        ans = await chat.send_message_async(self.answer_on_answer + text, generation_config=generation_config, safety_settings=safety_settings)
+        return ans.text
+    async def chat_answer_on_joke(self, chat: genai.ChatSession, text: str) -> str:
+        ans = await chat.send_message_async(self.answer_on_joke + text, generation_config=generation_config, safety_settings=safety_settings)
+        return ans.text
 
 pers = [
     Personality
@@ -98,10 +105,12 @@ class Conversation:
         self.joke = joke
 
     async def __aiter__(self) -> AsyncIterable[tuple[str, str]]:
-        bot_answer = await self.bot.get_answer_on_joke(self.joke)
-        client_answer = await self.client.get_answer_on_answer(bot_answer)
+        bot_chat = model.start_chat()
+        client_chat = model.start_chat()
+        bot_answer = await self.bot.chat_answer_on_joke(bot_chat, self.joke)
+        client_answer = await self.client.chat_answer_on_answer(client_chat, bot_answer)
         yield (bot_answer, client_answer)
         for i in range(randint(0,4)):
-            bot_answer = await self.bot.get_answer_on_answer(client_answer)
-            client_answer = await self.client.get_answer_on_answer(bot_answer)
+            bot_answer = await self.bot.chat_answer_on_joke(bot_chat, self.joke)
+            client_answer = await self.client.chat_answer_on_answer(client_chat, bot_answer)
             yield (bot_answer, client_answer)
