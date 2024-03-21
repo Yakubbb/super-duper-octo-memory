@@ -98,8 +98,10 @@ class Conversation:
         self.joke = joke
 
     async def __aiter__(self) -> AsyncIterable[tuple[str, str]]:
-        client_answer = self.joke
-        for i in range(randint(1,5)):
+        bot_answer = await self.bot.get_answer_on_joke(self.joke)
+        client_answer = await self.client.get_answer_on_answer(bot_answer)
+        yield (bot_answer, client_answer)
+        for i in range(randint(0,4)):
             bot_answer = await self.bot.get_answer_on_answer(client_answer)
             client_answer = await self.client.get_answer_on_answer(bot_answer)
             yield (bot_answer, client_answer)
